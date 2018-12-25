@@ -1,0 +1,60 @@
+diff -x .git -cwrp linux4.20/arch/arm/Kconfig linux/arch/arm/Kconfig
+*** linux4.20/arch/arm/Kconfig	2018-12-25 10:24:06.656676663 +0900
+--- linux/arch/arm/Kconfig	2018-12-25 10:28:48.208881899 +0900
+*************** config ARCH_MULTI_V5
+*** 662,668 ****
+  	select ARCH_MULTI_V4_V5
+  	select CPU_ARM926T if !(CPU_ARM946E || CPU_ARM1020 || \
+  		CPU_ARM1020E || CPU_ARM1022 || CPU_ARM1026 || \
+! 		CPU_XSCALE || CPU_XSC3 || CPU_MOHAWK || CPU_FEROCEON)
+  
+  config ARCH_MULTI_V4_V5
+  	bool
+--- 662,668 ----
+  	select ARCH_MULTI_V4_V5
+  	select CPU_ARM926T if !(CPU_ARM946E || CPU_ARM1020 || \
+  		CPU_ARM1020E || CPU_ARM1022 || CPU_ARM1026 || \
+! 		CPU_XSCALE || CPU_XSC3 || CPU_MOHAWK || CPU_FEROCEON || CPU_V6)
+  
+  config ARCH_MULTI_V4_V5
+  	bool
+diff -x .git -cwrp linux4.20/arch/arm/mach-versatile/Kconfig linux/arch/arm/mach-versatile/Kconfig
+*** linux4.20/arch/arm/mach-versatile/Kconfig	2018-12-25 10:24:06.840679676 +0900
+--- linux/arch/arm/mach-versatile/Kconfig	2018-12-25 10:29:08.344666405 +0900
+*************** config ARCH_VERSATILE
+*** 7,13 ****
+  	select ARM_VIC
+  	select CLKSRC_VERSATILE
+  	select COMMON_CLK_VERSATILE
+! 	select CPU_ARM926T
+  	select ICST
+  	select MFD_SYSCON
+  	select PLAT_VERSATILE
+--- 7,13 ----
+  	select ARM_VIC
+  	select CLKSRC_VERSATILE
+  	select COMMON_CLK_VERSATILE
+! 	select CPU_V6
+  	select ICST
+  	select MFD_SYSCON
+  	select PLAT_VERSATILE
+diff -x .git -cwrp linux4.20/drivers/mmc/host/Kconfig linux/drivers/mmc/host/Kconfig
+*** linux4.20/drivers/mmc/host/Kconfig	2018-12-25 10:24:08.528707337 +0900
+--- linux/drivers/mmc/host/Kconfig	2018-12-25 10:29:37.984622047 +0900
+*************** config MMC_TOSHIBA_PCI
+*** 956,962 ****
+  
+  config MMC_BCM2835
+  	tristate "Broadcom BCM2835 SDHOST MMC Controller support"
+! 	depends on ARCH_BCM2835 || COMPILE_TEST
+  	help
+  	  This selects the BCM2835 SDHOST MMC controller. If you have
+  	  a BCM2835 platform with SD or MMC devices, say Y or M here.
+--- 956,962 ----
+  
+  config MMC_BCM2835
+  	tristate "Broadcom BCM2835 SDHOST MMC Controller support"
+! 	depends on ARCH_BCM2835 || COMPILE_TEST || ARCH_VERSATILE
+  	help
+  	  This selects the BCM2835 SDHOST MMC controller. If you have
+  	  a BCM2835 platform with SD or MMC devices, say Y or M here.
