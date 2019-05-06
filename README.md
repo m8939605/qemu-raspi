@@ -2,12 +2,12 @@
 
 ## 最終更新日
 
-2018/12/17
+2019/5/6
 
 ## 動作環境
 
-- Ubuntu 18.10(on Windows10 Hyper-V)
-- qemu-system-arm 2.12.0
+- Ubuntu 19.04(on Windows10 1804 Hyper-V)
+- qemu-system-arm 3.1.0
 
 ## 事前準備
 
@@ -16,15 +16,22 @@
 - https://www.raspberrypi.org/downloads/raspbian/
 - http://ftp.jaist.ac.jp/pub/raspberrypi/raspbian_lite/images/
 
-イメージファイルは「2018-11-13-raspbian-stretch-lite.img」(1.8GB)のようなファイルで、同梱されているカーネルモジュール(.ko)がどのカーネルバージョンでビルドされているかを調べておきます。
+イメージファイルは「2019-04-08-raspbian-stretch-lite.img」(1.7GB, kernel 4.14.98+向け)のようなファイルです。
 
-原則としてカーネルとカーネルモジュールがビルドされたカーネルバージョンを合わせておく必要があるからです。ただし、本サイトで配布しているカーネルはドライバを静的リンクしているため、実際にはカーネルモジュールとカーネルバージョンが合っていなくても起動できます。
+カーネルとイメージファイルのカーネルモジュールは、ビルドされたカーネルバージョンを合わせておく必要がありますが、
+本サイトで配布しているカーネルはドライバを静的リンクしているため、実際にはカーネルモジュールとカーネルバージョンが
+合っていなくても起動できます。
+
+## 必要なパッケージ
+
+- git
+- qemu-system-arm
 
 ## QEMUからのLinuxカーネル起動方法
 
 qemu-system-armコマンドはGNOME(X Window System)の端末から実行します。SSH端末上では実行できません。
 
-Linuxカーネル(zImage)、Device Tree(versatile-pb.dtb)、イメージファイル(2018-11-13-raspbian-stretch-lite.img)をカレントディレクトリに格納して、下記コマンドを実行します。
+Linuxカーネル(zImage)、Device Tree(versatile-pb.dtb)、イメージファイルをカレントディレクトリに格納して、下記コマンドを実行します。
 
 ```
 # qemu-system-arm \
@@ -36,7 +43,7 @@ Linuxカーネル(zImage)、Device Tree(versatile-pb.dtb)、イメージファ�
 -no-reboot \
 -serial stdio \
 -append "root=/dev/sda2 panic=1 rootfstype=ext4 rw" \
--hda 2018-11-13-raspbian-stretch-lite.img \
+-hda 2019-04-08-raspbian-stretch-lite.img \
 -net nic -net user,hostfwd=tcp::10022-:22
 ```
 
@@ -45,22 +52,33 @@ Linuxカーネル(zImage)、Device Tree(versatile-pb.dtb)、イメージファ�
 クロスコンパイルでLinuxカーネルをビルドします。
 下記手順にしたがってtoolchainを導入します。
 - https://www.raspberrypi.org/documentation/linux/kernel/building.md
-
-イメージファイル(2018-11-13-raspbian-stretch-lite.img)のカーネルモジュールが4.14.79でビルドされていたため、ここではLinuxカーネル4.14.79を使うことにします。
-
-4.14.79カーネルをクローンします。
 ```
-# git clone --depth=1 -b raspberrypi-kernel_1.20181112-1 https://github.com/raspberrypi/linux
+# git clone https://github.com/raspberrypi/tools ~/tools
+↓.bashrcでパスを通す
+export PATH=$PATH:~/tools/arm-bcm2708/gcc-linaro-arm-linux-gnueabihf-raspbian-x64/bin
 ```
 
-Linuxカーネルに「linux4.14.79.diff」をパッチします。
+5.0カーネルをクローンします。
+```
+# git clone --depth=1 -b rpi-5.0.y https://github.com/raspberrypi/linux linux5.0
+```
+
+Linuxカーネルに「linux5.0.diff」をパッチします。
+```
+# patch --dry-run -p0 < linux5.0.diff
+# patch  -p0 < linux5.0.diff
+```
 
 次に下記コマンドを実行します。
 
 ```
+# linux5.0
 # make ARCH=arm CROSS_COMPILE=arm-linux-gnueabihf- versatile_defconfig
 ```
-同梱の「_config」を「.config」に上書きします。
+同梱の「config_file_5.0」を「.config」に上書きします。
+```
+# mv config_file_5.0 .config
+```
 
 カーネルとDevic Treeをビルドします。
 
@@ -77,19 +95,20 @@ Linuxカーネルに「linux4.14.79.diff」をパッチします。
 ## Appendix: イメージファイルのマウント方法
 
 ```
-# fdisk -l 2018-11-13-raspbian-stretch-lite.img
-ディスク 2018-11-13-raspbian-stretch-lite.img: 1.8 GiB, 1866465280 バイト, 3645440 セクタ
-単位: セクタ (1 * 512 = 512 バイト)
-セクタサイズ (論理 / 物理): 512 バイト / 512 バイト
-I/O サイズ (最小 / 推奨): 512 バイト / 512 バイト
-ディスクラベルのタイプ: dos
-ディスク識別子: 0x7ee80803
+# fdisk -l 2019-04-08-raspbian-stretch-lite.img
+Disk 2019-04-08-raspbian-stretch-lite.img: 1.7 GiB, 1803550720 bytes, 3522560 sectors
+Units: sectors of 1 * 512 = 512 bytes
+Sector size (logical/physical): 512 bytes / 512 bytes
+I/O size (minimum/optimal): 512 bytes / 512 bytes
+Disklabel type: dos
+Disk identifier: 0xc1dc39e5
 
-デバイス                              起動 開始位置 最後から  セクタ サイズ Id タイプ
-2018-11-13-raspbian-stretch-lite.img1          8192    98045   89854  43.9M  c W95 FAT32 (LBA)
-2018-11-13-raspbian-stretch-lite.img2         98304  3645439 3547136   1.7G 83 Linux
+Device                                Boot Start     End Sectors  Size Id Type
+2019-04-08-raspbian-stretch-lite.img1       8192   96042   87851 42.9M  c W95 FAT32 (LBA)
+2019-04-08-raspbian-stretch-lite.img2      98304 3522559 3424256  1.6G 83 Linux
 ```
 
 ```
-# sudo mount -v -o offset=$((512*98304)) -t ext4 ./2018-11-13-raspbian-stretch-lite.img /mnt
+# sudo mount -v -o offset=$((512*98304)) -t ext4 ./2019-04-08-raspbian-stretch-lite.img /mnt
+# sudo umount /mnt
 ```
